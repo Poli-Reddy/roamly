@@ -1,6 +1,8 @@
 import os
 import shutil
 import sys
+import asyncio
+import time
 from pathlib import Path
 from typing import Any
 
@@ -30,9 +32,12 @@ AVIATION_STACK_API_KEY = (
 
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
+MCP_RETRIES = max(0, int(os.getenv("MCP_RETRIES", "2")))
+MCP_CACHE_TTL_SECONDS = max(0, int(os.getenv("MCP_CACHE_TTL_SECONDS", "300")))
 
 WEATHER_SERVER_PATH = BASE_DIR / "custom_weather_mcp_server.py"
-UVX_COMMAND = shutil.which("uvx") or "uvx"
+UVX_COMMAND = os.getenv("UVX_COMMAND") or shutil.which("uvx") or "uvx"
 
 
 def _require_env(name: str, value: str | None) -> str:
@@ -66,7 +71,7 @@ def _subprocess_env(**updates: str | None) -> dict[str, str]:
 # =========================================================
 
 llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
+    model=GROQ_MODEL,
     api_key=_require_env("GROQ_API_KEY", GROQ_API_KEY),
 )
 
@@ -113,6 +118,8 @@ client = MultiServerMCPClient(
         },
     }
 )
+
+_tool_cache: dict[tuple[str, str, str], tuple[float, Any]] = {}
 
 
 async def _get_server_tool(
@@ -188,6 +195,38 @@ async def _get_server_tool(
     return tool
 
 
+async def _invoke_tool(
+    server_name: str,
+    tool_name: str,
+    tool_args: dict[str, Any],
+    cache_key: str,
+):
+    """Invoke a read-only MCP tool with bounded retries and short-lived caching."""
+    key = (server_name, tool_name, cache_key)
+    now = time.monotonic()
+    cached = _tool_cache.get(key)
+    if cached and now - cached[0] < MCP_CACHE_TTL_SECONDS:
+        return cached[1]
+
+    last_error: Exception | None = None
+    for attempt in range(MCP_RETRIES + 1):
+        try:
+            tool = await _get_server_tool(server_name, tool_name)
+            result = await tool.ainvoke(tool_args)
+            if MCP_CACHE_TTL_SECONDS:
+                _tool_cache[key] = (time.monotonic(), result)
+            return result
+        except Exception as exc:
+            last_error = exc
+            if attempt < MCP_RETRIES:
+                await asyncio.sleep(0.25 * (2**attempt))
+
+    raise RuntimeError(
+        f"MCP {server_name}/{tool_name} failed after {MCP_RETRIES + 1} attempts: "
+        f"{last_error}"
+    ) from last_error
+
+
 # =========================================================
 # MCP connection test
 # =========================================================
@@ -233,15 +272,11 @@ async def get_all_tools() -> None:
 # =========================================================
 
 async def tavily_mcp_search(query: str):
-    search_tool = await _get_server_tool(
+    return await _invoke_tool(
         "tavily",
         "tavily_search",
-    )
-
-    return await search_tool.ainvoke(
-        {
-            "query": query,
-        }
+        {"query": query},
+        query.strip().lower(),
     )
 
 
@@ -253,13 +288,12 @@ async def aviation_mcp_call(
     tool_name: str,
     tool_args: dict[str, Any] | None = None,
 ):
-    aviation_tool = await _get_server_tool(
+    args = tool_args or {}
+    return await _invoke_tool(
         "aviationstack",
         tool_name,
-    )
-
-    return await aviation_tool.ainvoke(
-        tool_args or {}
+        args,
+        repr(sorted(args.items())),
     )
 
 
@@ -268,28 +302,20 @@ async def aviation_mcp_call(
 # =========================================================
 
 async def weather_mcp_search(city: str):
-    weather_tool = await _get_server_tool(
+    return await _invoke_tool(
         "weather",
         "get_current_weather",
-    )
-
-    return await weather_tool.ainvoke(
-        {
-            "city": city,
-        }
+        {"city": city},
+        city.strip().lower(),
     )
 
 
 async def forecast_mcp_search(city: str):
-    forecast_tool = await _get_server_tool(
+    return await _invoke_tool(
         "weather",
         "get_forecast",
-    )
-
-    return await forecast_tool.ainvoke(
-        {
-            "city": city,
-        }
+        {"city": city},
+        city.strip().lower(),
     )
 
 

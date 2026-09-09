@@ -3,74 +3,87 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TripMate AI</title>
+  <meta name="theme-color" content="#f4f1ea">
+  <title>Roamly | Your travel desk</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <div class="page-bg">
-    <div class="gradient-circle circle-1"></div>
-    <div class="gradient-circle circle-2"></div>
-    <div class="gradient-circle circle-3"></div>
-  </div>
-
-  <main class="app-container">
-    <section class="hero-section">
-      <div class="badge">
-        ✈️ TripMate AI — LangGraph, MCP, Supervisor, Guardrails & HITL
+  <div class="page-shell">
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Roamly home">
+        <span class="brand-mark">R</span>
+        <span>roamly</span>
+      </a>
+      <div class="header-meta">
+        <span class="live-indicator"><span class="status-dot"></span>Planning desk open</span>
+        <span class="header-divider"></span>
+        <span class="header-note">Flights · stays · days well spent</span>
       </div>
-      <h1>Plan Your Perfect Trip with AI</h1>
-      <p>
-        Search flights, discover hotels, check weather, assess your budget,
-        and review the AI-generated draft before the final itinerary is created.
-      </p>
-    </section>
+    </header>
 
-    <section class="planner-card">
-      <div class="card-header">
-        <div>
-          <h2>Where do you want to go?</h2>
-          <p>
-            Example: Plan a complete 7 days Japan trip from Bangladesh under 2 lakhs.
-          </p>
+    <main class="app-container">
+      <section class="hero-section">
+        <div class="hero-copy">
+          <span class="eyebrow">A better way to get away</span>
+          <h1>Make room for<br><em>the good stuff.</em></h1>
+          <p>Tell us what kind of trip you want. Roamly brings the practical details together, then leaves you in control of the final plan.</p>
         </div>
-        <div class="status-pill">
-          <span class="status-dot"></span>
-          Online
+        <div class="hero-stamp" aria-hidden="true">
+          <span class="stamp-ring">TRAVEL WELL · TRAVEL WELL · </span>
+          <span class="stamp-icon">✦</span>
         </div>
-      </div>
+      </section>
 
-      <div class="input-area">
-        <textarea
-          id="userInput"
-          placeholder="Plan a complete 7 days Japan trip including flights, hotels and sightseeing under 2 lakhs..."
-        ></textarea>
-        <button id="sendBtn" onclick="sendMessage()">
-          <span id="btnText">Generate Draft</span>
-          <span id="btnLoader" class="loader hidden"></span>
-        </button>
-      </div>
+      <section class="planner-card" aria-labelledby="plannerTitle">
+        <div class="section-kicker"><span class="step-number">01</span><span>Start with the shape of your trip</span></div>
+        <div class="card-header">
+          <div>
+            <h2 id="plannerTitle">Where are you headed?</h2>
+            <p>Include dates, your starting point, and the details that make a trip feel like yours.</p>
+          </div>
+          <span class="private-note"><span aria-hidden="true">↗</span> Your preferences stay with this plan</span>
+        </div>
 
-      <div class="quick-prompts">
-        <button onclick="setPrompt('Plan a complete 7 days Japan trip from Bangladesh including flights, hotels and sightseeing under 2 lakhs.')">
-          Japan Trip
-        </button>
-        <button onclick="setPrompt('Plan a 5 days Dubai trip from Dhaka with flights, hotels and sightseeing.')">
-          Dubai Trip
-        </button>
-        <button onclick="setPrompt('Plan a 7 days Thailand trip from Bangladesh with budget hotels and sightseeing.')">
-          Thailand Trip
-        </button>
-        <button onclick="setPrompt('Give me all country flight info.')">
-          Global Flights
-        </button>
-      </div>
-    </section>
+        <form id="travelForm" class="travel-form" onsubmit="event.preventDefault(); sendMessage();">
+          <label class="sr-only" for="userInput">Describe your trip</label>
+          <textarea id="userInput" maxlength="1200" placeholder="Try: Plan four relaxed days in Dubai next month. I prefer budget hotels, vegetarian food and outdoor activities."></textarea>
+          <div class="origin-row">
+            <label for="manualOrigin">Starting from</label>
+            <input id="manualOrigin" maxlength="120" placeholder="Add a city, or use your location">
+            <button id="locationBtn" type="button" onclick="useMyLocation()"><span aria-hidden="true">⌖</span> Use my location</button>
+            <span id="locationStatus" class="location-status" role="status">Not shared</span>
+          </div>
+          <div class="composer-footer">
+            <span id="characterCount" class="character-count">0 / 1200</span>
+            <button id="sendBtn" type="submit">
+              <span id="btnText">Build my trip <span aria-hidden="true">→</span></span>
+              <span id="btnLoader" class="loader hidden" aria-label="Building your trip"></span>
+            </button>
+          </div>
+        </form>
+
+        <div class="prompt-heading"><span>Not sure where to start?</span><span class="prompt-line"></span></div>
+        <div class="quick-prompts">
+          <button type="button" onclick="setPrompt('Plan a 4-day trip to Goa from Delhi with flights, a comfortable hotel, beaches, sightseeing, and a relaxed schedule.')"><span class="prompt-icon">◎</span> Plan a Goa trip</button>
+          <button type="button" onclick="setPrompt('Find flight options from Delhi to Tokyo, Japan for next month. Compare airlines, likely fares, travel time, and booking advice.')"><span class="prompt-icon">◌</span> Delhi to Japan</button>
+          <button type="button" onclick="setPrompt('Recommend local food and the best beaches in Goa. Include vegetarian options, must-try dishes, beach timings, and safety tips.')"><span class="prompt-icon">◈</span> Goa food & beaches</button>
+          <button type="button" onclick="setPrompt('Plan a budget-friendly 3-day Goa trip from Mumbai with affordable hotels, local transport, seafood and vegetarian food, and the best beaches.')"><span class="prompt-icon">↗</span> Budget Goa</button>
+        </div>
+      </section>
+
+      <section class="process-strip" aria-label="How your plan is made">
+        <div><span class="process-icon">01</span><strong>Share the brief</strong><small>Tell us what matters</small></div>
+        <span class="process-arrow">→</span>
+        <div><span class="process-icon">02</span><strong>Shape the route</strong><small>We check the details</small></div>
+        <span class="process-arrow">→</span>
+        <div><span class="process-icon">03</span><strong>Make it yours</strong><small>You review before it is final</small></div>
+      </section>
 
     <section id="workflowSection" class="workflow-section hidden">
       <div class="workflow-header">
         <div>
-          <span class="eyebrow">Supervisor Agent</span>
-          <h2>Execution Plan</h2>
+          <span class="eyebrow">Your planning desk</span>
+          <h2>What we are looking at</h2>
         </div>
         <span id="guardrailBadge" class="guardrail-badge">Guardrail passed</span>
       </div>
@@ -78,20 +91,34 @@
       <div id="agentChips" class="agent-chips"></div>
     </section>
 
+    <section id="insightsSection" class="insights-section hidden">
+      <div class="insight-panel">
+        <span class="eyebrow">Made for you</span>
+        <h2>Your travel notes</h2>
+        <div id="preferencesBox" class="insight-body"></div>
+      </div>
+      <div class="insight-panel safety-panel">
+        <span class="eyebrow">Good to know</span>
+        <h2>Trip watch-outs</h2>
+        <div id="safetyBox" class="insight-body"></div>
+      </div>
+    </section>
+
     <section id="resultSection" class="result-section hidden">
       <div class="result-header">
         <div>
-          <h2 id="resultTitle">Your AI Travel Plan</h2>
-          <p id="threadInfo">Thread ID: -</p>
+          <span class="eyebrow">The working itinerary</span>
+          <h2 id="resultTitle">Your travel plan</h2>
+          <p id="threadInfo">Plan reference: -</p>
         </div>
         <div class="result-actions">
-          <button class="copy-btn" onclick="copyResult()">Copy</button>
-          <button class="download-btn" onclick="downloadPDF()">Download PDF</button>
+          <button class="copy-btn" onclick="copyResult()" title="Copy plan text"><span aria-hidden="true">□</span> Copy</button>
+          <button class="download-btn" onclick="downloadPDF()" title="Download plan as PDF"><span aria-hidden="true">↓</span> Save PDF</button>
         </div>
       </div>
 
       <div id="pdfContent" class="pdf-content">
-        <h1 class="pdf-title">AI Travel Plan</h1>
+        <h1 class="pdf-title">My Roamly plan</h1>
         <div id="resultBox" class="result-box"></div>
       </div>
     </section>
@@ -99,8 +126,8 @@
     <section id="approvalSection" class="approval-section hidden">
       <div class="approval-icon">👤</div>
       <div class="approval-content">
-        <span class="eyebrow">Human-in-the-Loop</span>
-        <h2>Review the draft itinerary</h2>
+        <span class="eyebrow">One last look</span>
+        <h2>Does this feel like your trip?</h2>
         <p id="approvalRequest">
           Approve the draft or provide feedback before the final plan is generated.
         </p>
@@ -108,27 +135,26 @@
         <textarea
           id="approvalFeedback"
           class="feedback-input"
-          placeholder="Add revision feedback, for example: reduce the hotel cost and add one free day..."
+          placeholder="Tell us what to change, for example: keep the outdoor day but move it away from the rain..."
         ></textarea>
 
         <div class="approval-actions">
           <button id="approveBtn" class="approve-btn" onclick="submitApproval(true)">
-            Approve & Generate Final
+            Looks good <span aria-hidden="true">✓</span>
           </button>
           <button id="reviseBtn" class="revise-btn" onclick="submitApproval(false)">
-            Revise Using Feedback
+            Make a change <span aria-hidden="true">↗</span>
           </button>
         </div>
       </div>
     </section>
 
     <section id="errorBox" class="error-box hidden"></section>
-  </main>
+    </main>
+    <footer><span>roamly</span><span>Thoughtful plans for time well spent.</span></footer>
+  </div>
 
-  <footer>
-    Built with FastAPI, LangGraph, Groq, PostgreSQL, Tavily, AviationStack and MCP
-  </footer>
-
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="/static/script.js"></script>
