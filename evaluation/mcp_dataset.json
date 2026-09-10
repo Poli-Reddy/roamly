@@ -1,0 +1,7 @@
+[
+{"id":"mcp-weather-valid","server":"weather","tool":"get_current_weather","args":{"city":"Tokyo"},"expected":"live_success"},
+{"id":"mcp-weather-forecast","server":"weather","tool":"get_forecast","args":{"city":"Paris"},"expected":"live_success"},
+{"id":"mcp-weather-invalid","server":"weather","tool":"get_current_weather","args":{"city":""},"expected":"live_failure"},
+{"id":"mcp-tavily-valid","server":"tavily","tool":"tavily_search","args":{"query":"budget hotels in Lisbon"},"expected":"live_success"},
+{"id":"mcp-aviation-airports","server":"aviationstack","tool":"list_airports","args":{},"expected":"live_success"}
+]

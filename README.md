@@ -10,12 +10,26 @@ Key ideas:
 - Shared preferences and safety analysis passed through `TravelState`
 - Human-in-the-loop approval for generated plans
 - Targeted reruns when review feedback changes preferences or safety constraints
+- Optional API-key authentication, request IDs, structured logs, and rate limiting
+- Readiness checks for deployment health probes
+- A 60-scenario live evaluation dataset and evidence-first metrics runner
 
 Contents
 - `app.py`: FastAPI web frontend and API endpoints
 - `backend.py`: core agent orchestration / travel-planner logic
 - `mcp_client.py`: client helpers to interact with the MCP server
 - `custom_weather_mcp_server.py`: example MCP server for weather checks
+- `evaluation/dataset.json`: labeled evaluation scenarios across 10 travel categories
+- `evaluation/routing_dataset.json`: 50 scenarios with expected specialist-agent sets
+- `evaluation/quality_dataset.json`: labeled constraint and tool-evidence cases
+- `evaluation/runner.py`: live runner that records observed outcomes without fabricated scores
+- `evaluation/routing_runner.py`: exact selected-agent-set accuracy evaluator
+- `evaluation/load_test.py`: concurrent HTTP latency and success probe
+- `evaluation/quality.py`: explicitly heuristic constraint/evidence coverage checks
+- `evaluation/mcp_runner.py`: real MCP-only execution evaluator
+- `evaluation/hitl_runner.py`: real PostgreSQL-backed interrupt/resume evaluator
+- `evaluation/security_runner.py`: live application guardrail/security evaluator
+- `evaluation/validate_datasets.py`: schema and label validation without providers
 - `templates/`, `static/`: frontend UI assets (HTML, JS, CSS)
 
 Features
@@ -80,6 +94,13 @@ API Endpoints
 - `POST /api/travel/approve` — approve or request revisions for a draft. JSON: `{ "thread_id": "<id>", "approved": true|false, "feedback": "optional" }`
 - `GET /api/location/reverse` — reverse-geocode browser coordinates after the user grants location permission.
 - `GET /health` — basic health check and features list
+- `GET /ready` — readiness check for required LLM and PostgreSQL configuration
+
+Production controls
+- Set `ROAMLY_API_KEY` to require `X-API-Key` or `Authorization: Bearer ...` on `/api/*` requests.
+- `RATE_LIMIT_REQUESTS` and `RATE_LIMIT_WINDOW_SECONDS` provide a bounded per-client in-process limit.
+- Every response includes `X-Request-ID`; request completion logs include status and latency.
+- `/health` is liveness. `/ready` is readiness and returns 503 when required configuration is absent.
 
 Configuration & environment
 - Secrets and API keys are not included in the repo. Set these environment variables in `.env` or the process environment:
@@ -87,6 +108,9 @@ Configuration & environment
 	- `GROQ_MODEL` — optional Groq model name; defaults to `openai/gpt-oss-20b`.
 	- `MCP_RETRIES` — optional retry count for live MCP calls; defaults to `2`.
 	- `MCP_CACHE_TTL_SECONDS` — optional read-cache lifetime; defaults to `300` seconds.
+	- `ROAMLY_API_KEY` — optional API key for production API authentication.
+	- `RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW_SECONDS` — optional API rate-limit window.
+	- `LOG_LEVEL` — optional logging level; defaults to `INFO`.
 	- `DATABASE_URL` — required PostgreSQL connection URL for LangGraph checkpoint persistence.
 	- MCP/Tavily credentials used by `mcp_client.py` — required for live search and weather data; agents provide fallback guidance when those services are unavailable.
 
@@ -98,7 +122,41 @@ Example requests
 
 Development notes
 - Synchronous LangGraph helpers run in worker threads from FastAPI so the async MCP calls have their own event loop.
-- Run the automated checks with `python -m unittest discover -s tests -v`.
+- **Level 1 unit/regression:** `python -m unittest discover -s tests -v` (mocks are intentional and do not prove live AI behavior).
+- **Dataset contract checks:** `python evaluation/validate_datasets.py` (no provider calls).
+- Validate the evaluation dataset with `python evaluation/runner.py --help`.
+- Run a real evaluation only after configuring live credentials and PostgreSQL:
+
+```powershell
+python evaluation/runner.py --mode live --output evaluation/results/live-run.json
+```
+
+The runner executes the labeled scenarios against the configured system and stores
+per-case latency, task completion, structured-output, guardrail, and MCP metrics.
+It reports provider cost and semantic hallucination rate as unknown/not claimed
+when the configured provider does not expose enough evidence. It never fills in
+invented numbers. Evaluation result files are ignored by git.
+
+Additional live evaluations:
+
+```powershell
+python evaluation/routing_runner.py --output evaluation/results/routing-run.json
+python evaluation/runner.py --dataset evaluation/quality_dataset.json --output evaluation/results/quality-run.json
+python evaluation/load_test.py --requests 10 --concurrency 5
+python evaluation/mcp_runner.py --output evaluation/results/mcp-run.json
+python evaluation/hitl_runner.py --output evaluation/results/hitl-run.json
+python evaluation/security_runner.py --output evaluation/results/security-run.json
+```
+
+Routing accuracy is an exact match against the labeled agent set. Quality scores
+are case-insensitive term-coverage heuristics and are not a substitute for human
+factuality review. Prompt-injection cases are blocked deterministically before
+the LLM guardrail and covered by regression tests.
+
+Live commands require real credentials and services. They fail clearly when
+configuration is missing and never switch to mock mode. Evaluation artifacts
+include a run ID, dataset hash, Git SHA when available, model, environment, and
+per-case evidence. Existing result files are never overwritten.
 - See `DEPLOYMENT.md` for Docker and Render deployment instructions.
 
 Contributing

@@ -10,6 +10,8 @@ services:
         sync: false
       - key: GROQ_MODEL
         value: openai/gpt-oss-20b
+      - key: ENVIRONMENT
+        value: production
       - key: DATABASE_URL
         sync: false
       - key: TAVILY_API_KEY
@@ -17,6 +19,8 @@ services:
       - key: AVIATION_STACK_API_KEY
         sync: false
       - key: OPENWEATHER_API_KEY
+        sync: false
+      - key: ROAMLY_API_KEY
         sync: false
       - key: LANGCHAIN_TRACING
         value: "false"

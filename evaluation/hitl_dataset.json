@@ -1,0 +1,14 @@
+[
+{"id":"hitl-approve","prompt":"Plan a 4-day trip to Dubai with a relaxed pace.","action":"approve","feedback":"","required_changes":{}},
+{"id":"hitl-revise-preference","prompt":"Plan a 4-day trip to Dubai with outdoor activities.","action":"reject","feedback":"Make the pace relaxed and add vegetarian food.","required_changes":{"travel_pace":["relaxed"],"food_preferences":["vegetarian"]}},
+{"id":"hitl-revise-safety","prompt":"Plan an outdoor trip to Costa Rica.","action":"reject","feedback":"Move outdoor activities away from rainy weather and reduce risk.","required_changes":{"weather":["rain","weather"],"safety":["risk","safety"]}},
+{"id":"hitl-budget","prompt":"Plan a 5-day trip to Paris with a moderate budget.","action":"reject","feedback":"Reduce the estimated cost and prioritize affordable choices.","required_changes":{"budget":["budget","affordable","cost"]}},
+{"id":"hitl-hotel","prompt":"Plan a week in London with central accommodation.","action":"reject","feedback":"Use an accessible hotel near public transport.","required_changes":{"hotel":["hotel"],"accessibility":["accessible"],"transportation":["transport","transit"]}},
+{"id":"hitl-pace","prompt":"Plan a 3-day Rome itinerary with museums and food.","action":"reject","feedback":"Slow down the schedule and add rest time.","required_changes":{"travel_pace":["relaxed","slow","rest"]}},
+{"id":"hitl-activity","prompt":"Plan an adventure trip to New Zealand.","action":"reject","feedback":"Remove high-risk activities and keep safer outdoor options.","required_changes":{"safety":["risk","safe","safety"]}},
+{"id":"hitl-food","prompt":"Plan a family trip to Singapore.","action":"reject","feedback":"Add vegetarian family-friendly food options.","required_changes":{"food_preferences":["vegetarian"],"traveler":["family"]}},
+{"id":"hitl-transport","prompt":"Plan a week in Portugal.","action":"reject","feedback":"Use trains instead of rental cars.","required_changes":{"transportation":["train"]}},
+{"id":"hitl-multiple","prompt":"Plan a relaxed trip to Tokyo with outdoor activities.","action":"reject","feedback":"Make it vegetarian, affordable, and avoid outdoor plans during rain.","required_changes":{"food_preferences":["vegetarian"],"budget":["affordable","budget"],"weather":["rain","weather"]}},
+{"id":"hitl-repeat","prompt":"Plan a 4-day trip to Barcelona.","action":"reject","feedback":"Add more rest time.","required_changes":{"travel_pace":["rest","relaxed"]}},
+{"id":"hitl-final-approve","prompt":"Plan a 4-day trip to Amsterdam.","action":"approve","feedback":"","required_changes":{}}
+]

@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Configure test environment
+        run: |
+          printf '%s\n' \
+            'GROQ_API_KEY=ci-groq-key' \
+            'DATABASE_URL=postgresql://ci:ci@localhost:5432/ci' \
+            'TAVILY_API_KEY=ci-tavily-key' \
+            'AVIATION_STACK_API_KEY=ci-aviation-key' \
+            'OPENWEATHER_API_KEY=ci-weather-key' \
+            'LANGCHAIN_TRACING=false' \
+            'LANGCHAIN_ENDPOINT=https://api.smith.langchain.com' \
+            'LANGCHAIN_API_KEY=ci-langsmith-key' \
+            'LANGCHAIN_PROJECT=Roamly-CI' \
+            'MCP_RETRIES=2' \
+            'MCP_CACHE_TTL_SECONDS=300' > .env
+      - name: Compile Python modules
+        run: python -m py_compile app.py backend.py mcp_client.py evaluation/*.py
+      - name: Validate evaluation dataset
+        run: python evaluation/validate_datasets.py
+      - name: Run tests
+        run: python -m unittest discover -s tests -v
